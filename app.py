@@ -5,7 +5,7 @@ import pickle
 import sklearn
 
 # Load model
-with open("credit_card_default (1).pkl", "rb") as file:
+with open("credit_card_default.pkl", "rb") as file:
     model = pickle.load(file)
 
 st.title("Credit Card Default Prediction")
