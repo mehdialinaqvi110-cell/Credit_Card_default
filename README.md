@@ -1,176 +1,71 @@
-# 💳 Credit Card Default Prediction
+# Credit Card Default Prediction
 
-## 📌 Project Overview
+A simple Machine Learning project that predicts whether a credit card customer is likely to **default on their payment** based on financial and repayment-related information.
 
-This project focuses on predicting whether a credit card customer is likely to **default on their payment** based on demographic information, credit limit, repayment history, bill amounts, and payment amounts.
+The project uses **Support Vector Machine (SVM)** for classification and a simple **Streamlit application** for making predictions.
 
-The project follows an end-to-end **Machine Learning workflow**, including data exploration, feature engineering, preprocessing, feature selection, model training, evaluation, and model serialization.
+## Project Overview
 
-The dataset contains **30,000 customer records and 25 columns**. The target variable is `default`, which indicates whether the customer defaulted on their credit card payment.
+Credit card default prediction is a classification problem where the objective is to identify whether a customer is likely to default based on their financial and repayment history.
 
----
+In this project, I performed:
 
-## 🎯 Objective
+* Data loading and exploration
+* Exploratory Data Analysis (EDA)
+* Feature engineering
+* Feature selection
+* Data preprocessing
+* SVM model training
+* Model evaluation
+* Model saving using Pickle
+* Simple Streamlit deployment
 
-The main objective of this project is to:
+## Dataset
 
-* Analyze customer financial and demographic characteristics.
-* Identify factors associated with credit card default.
-* Perform exploratory data analysis (EDA).
-* Engineer useful features from repayment history.
-* Select the most relevant features.
-* Build a machine learning classification model.
-* Evaluate the model using classification metrics.
-* Save the trained model for deployment.
+The dataset contains customer information related to:
 
----
+* Credit limit
+* Age
+* Education
+* Repayment status
+* Bill amounts
+* Payment amounts
+* Other customer financial information
 
-## 📊 Dataset
+### Target Variable
 
-The dataset contains **30,000 observations and 25 columns**. It includes demographic, credit, repayment, billing, and payment information.
+`default`
 
-### Main Features
+* `Y` → Customer defaults
+* `N` → Customer does not default
 
-| Feature                   | Description                           |
-| ------------------------- | ------------------------------------- |
-| `LIMIT_BAL`               | Credit limit assigned to the customer |
-| `SEX`                     | Customer gender                       |
-| `EDUCATION`               | Education level                       |
-| `MARRIAGE`                | Marital status                        |
-| `AGE`                     | Customer age                          |
-| `PAY_0`                   | Most recent repayment status          |
-| `PAY_2` - `PAY_6`         | Previous repayment statuses           |
-| `BILL_AMT1` - `BILL_AMT6` | Previous billing amounts              |
-| `PAY_AMT1` - `PAY_AMT6`   | Previous payment amounts              |
-| `default`                 | Target variable indicating default    |
+## Exploratory Data Analysis
 
-The `ID` column was removed because it is an identifier and does not provide useful predictive information.
+During EDA, I analyzed the relationship between different financial variables and credit card default.
 
----
+Some of the analysis included:
 
-## 🔍 Exploratory Data Analysis
+* Credit limit vs repayment status
+* Age vs credit limit
+* Bill amount vs payment amount
+* Payment-to-bill ratio
+* Repayment history and default
 
-Several EDA techniques were performed to understand the dataset and identify relationships with credit card default.
+One feature engineered during EDA was:
 
-### EDA Performed
-
-* Dataset structure and data types
-* Missing-value analysis
-* Duplicate-value analysis
-* Distribution analysis
-* Boxplots for numerical variables
-* Default distribution
-* Credit limit vs default
-* Age group vs default
-* Gender vs default
-* Education vs default
-* Marital status vs default
-* Repayment status vs default
-* Bill amount vs default
-* Payment amount vs default
-* Credit limit and repayment status analysis
-
-### Key Findings
-
-#### 💰 Credit Limit
-
-Credit limit was analyzed against default behavior to understand whether credit exposure is associated with repayment risk.
-
-#### 👤 Age
-
-Customers were grouped into age categories:
-
-* 21–30
-* 31–40
-* 41–50
-* 51–60
-* 61+
-
-The analysis showed that customers in the **21–40 age groups represented a notable portion of defaults**.
-
-#### 🎓 Education
-
-University-educated customers represented a large portion of the default observations in the dataset.
-
-#### 💍 Marital Status
-
-The analysis indicated that **married customers had more defaults than single customers**.
-
-#### 💳 Repayment Status
-
-Repayment status showed one of the strongest relationships with default. Customers with delayed repayments had a substantially higher likelihood of default.
-
----
-
-## 🛠️ Feature Engineering
-
-A new feature called `DELAY_COUNT` was created from the repayment-status columns:
+**Payment-to-Bill Ratio**
 
 ```python
-pay_cols = ['PAY_0', 'PAY_2', 'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6']
-
-df['DELAY_COUNT'] = (df[pay_cols] > 0).sum(axis=1)
+PAYMENT_RATIO = PAY_AMT1 / (abs(BILL_AMT1) + 1)
 ```
 
-This feature represents the **number of months in which the customer had a positive repayment delay**.
+The analysis showed that individual bill and payment variables have considerable overlap between defaulters and non-defaulters, so multiple features were used together for prediction.
 
-The analysis showed that:
+## Machine Learning Approach
 
-> As the number of payment delays increases, the default rate also increases.
+### 1. Feature Selection
 
-Another feature, `PAYMENT_RATIO`, was also explored:
-
-```python
-df['PAYMENT_RATIO'] = (
-    df['PAY_AMT1'] / (df['BILL_AMT1'].abs() + 1)
-)
-```
-
-This represents the relationship between payment amount and bill amount.
-
----
-
-## ⚙️ Data Preprocessing
-
-The dataset was divided into training and testing sets using an **80:20 split** with stratification:
-
-```python
-train_test_split(
-    x,
-    y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y
-)
-```
-
-### Numerical Features
-
-Numerical variables were scaled using:
-
-**RobustScaler**
-
-Robust scaling was selected to make the preprocessing less sensitive to extreme values.
-
-### Categorical Features
-
-Categorical variables were transformed using:
-
-**OneHotEncoder**
-
-```python
-OneHotEncoder(handle_unknown='ignore')
-```
-
-A `ColumnTransformer` was used to apply the appropriate preprocessing to numerical and categorical columns.
-
----
-
-## 🎯 Feature Selection
-
-To reduce the number of features and retain the most informative variables, **SelectKBest with ANOVA F-test (`f_classif`)** was used.
-
-The top **8 features** selected by the model were:
+After preprocessing and feature analysis, the following features were selected for the final model:
 
 ```text
 LIMIT_BAL
@@ -180,174 +75,196 @@ PAY_3
 PAY_4
 PAY_5
 PAY_6
+PAY_AMT1
+PAY_AMT2
+PAY_AMT3
+PAY_AMT4
+PAY_AMT5
+PAY_AMT6
 DELAY_COUNT
+EDUCATION
 ```
 
-These features were selected based on their statistical relationship with the target variable.
+### 2. Data Preprocessing
 
----
+The project uses a `ColumnTransformer` to preprocess the data.
 
-## 🤖 Machine Learning Model
+**Numerical features:**
 
-### Logistic Regression
+* RobustScaler
 
-A **Logistic Regression** classifier was trained using the selected features.
+**Categorical features:**
+
+* OneHotEncoder
+
+RobustScaler was used to reduce the effect of extreme values in financial variables.
+
+### 3. Train-Test Split
+
+The dataset was divided into:
+
+* 80% training data
+* 20% testing data
+
+Stratified splitting was used to maintain the class distribution.
 
 ```python
-from sklearn.linear_model import LogisticRegression
-
-lr = LogisticRegression(penalty='l2')
-lr.fit(best_features, y_train)
+train_test_split(
+    x_best,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
 ```
 
-Logistic Regression was used as the classification model to predict whether a customer would default.
+## Model
 
----
+### Support Vector Machine (SVM)
 
-## 📈 Model Evaluation
+The final model uses `SVC` from Scikit-learn.
 
-The model was evaluated on the test dataset using:
+The preprocessing and model were combined into a single Pipeline:
+
+```python
+model_pipe = Pipeline([
+    ("preprocessing", preprocessor),
+    ("model", SVC())
+])
+```
+
+This makes it easier to apply the same preprocessing when making predictions on new customer data.
+
+## Model Evaluation
+
+The model was evaluated using:
 
 * Accuracy
-* Precision
-* Recall
-* F1-score
+* Confusion Matrix
 * Classification Report
 
-### Accuracy
-
-The model achieved approximately:
-
-**🎯 Accuracy: 80.9%**
-
-The classification report showed stronger performance for the non-default class, while identifying default customers was more challenging.
-
-| Class             | Precision | Recall | F1-Score |
-| ----------------- | --------: | -----: | -------: |
-| Non-Default (`N`) |      0.96 |   0.82 |     0.89 |
-| Default (`Y`)     |      0.28 |   0.66 |     0.40 |
-
-This indicates that the model achieved a relatively high overall accuracy while maintaining a **66% recall for default customers**, which is an important metric for identifying potential defaulters.
-
----
-
-## 💾 Model Saving
-
-The trained Logistic Regression model was saved using Python's `pickle` module:
-
 ```python
-import pickle
-
-with open("credit_card_default.pkl", "wb") as f:
-    pickle.dump(lr, f)
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
 ```
 
-The saved model can later be loaded into a deployment application such as **Streamlit**.
+## Streamlit Application
 
----
+A simple **Streamlit application** was created to provide an easy interface for making predictions.
 
-## 📁 Project Structure
+The user enters the required customer information, and the application uses the trained SVM model to predict whether the customer is likely to default.
+
+The Streamlit application is intentionally simple and focuses on the basic prediction workflow rather than a complex dashboard.
+
+### Application Flow
+
+```text
+User Input
+    ↓
+Streamlit Interface
+    ↓
+Saved SVM Model
+    ↓
+Preprocessing
+    ↓
+Prediction
+    ↓
+Default / No Default
+```
+
+## Project Structure
 
 ```text
 Credit-Card-Default-Prediction/
 │
-├── Credit_Card_Default.ipynb
 ├── Credit Card Defaulter Prediction.csv
+├── Credit_Card_Default.ipynb
 ├── credit_card_default.pkl
 ├── app.py
 ├── requirements.txt
 └── README.md
 ```
 
-> The exact files in your repository may vary depending on which files you upload to GitHub.
+## Technologies Used
 
----
+* Python
+* Pandas
+* NumPy
+* Matplotlib
+* Seaborn
+* Scikit-learn
+* Streamlit
+* Pickle
 
-## 🖥️ Streamlit Deployment
+## Machine Learning Concepts Used
 
-The trained model can be integrated into a Streamlit application to allow users to enter customer information and receive a default prediction.
+* Exploratory Data Analysis
+* Feature Engineering
+* Feature Selection
+* Train-Test Split
+* Data Preprocessing
+* Robust Scaling
+* One-Hot Encoding
+* Support Vector Machine
+* Classification
+* Model Evaluation
+* Machine Learning Pipeline
 
-Example workflow:
+## How to Run the Project
 
-```text
-User Input
-    ↓
-Data Preprocessing
-    ↓
-Selected Features
-    ↓
-Logistic Regression Model
-    ↓
-Prediction
-    ↓
-Default / Non-Default
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/Credit-Card-Default-Prediction.git
 ```
 
----
+### 2. Navigate to the Project Folder
 
-## 🧰 Technologies Used
-
-* **Python**
-* **Pandas**
-* **NumPy**
-* **Matplotlib**
-* **Seaborn**
-* **SciPy**
-* **Scikit-learn**
-* **Pickle**
-* **Streamlit**
-* **Google Colab / Jupyter Notebook**
-
----
-
-## 🧠 Machine Learning Workflow
-
-```text
-Dataset
-   ↓
-Data Cleaning
-   ↓
-Exploratory Data Analysis
-   ↓
-Feature Engineering
-   ↓
-Train-Test Split
-   ↓
-Robust Scaling + One-Hot Encoding
-   ↓
-SelectKBest Feature Selection
-   ↓
-Logistic Regression
-   ↓
-Model Evaluation
-   ↓
-Model Serialization
-   ↓
-Streamlit Deployment
+```bash
+cd Credit-Card-Default-Prediction
 ```
 
----
+### 3. Install Dependencies
 
-## 📌 Conclusion
+```bash
+pip install -r requirements.txt
+```
 
-This project demonstrates how machine learning can be used to identify customers who are potentially at risk of credit card default.
+### 4. Run the Streamlit Application
 
-The analysis highlights the importance of **repayment behavior**, particularly delayed payments, in predicting default. The final Logistic Regression model achieved **80.9% test accuracy**, with a **66% recall for the default class**.
+```bash
+streamlit run app.py
+```
 
-The project also demonstrates an end-to-end machine learning workflow from **EDA and feature engineering to model development and deployment readiness**.
+The application will open in your browser.
 
----
+## requirements.txt
 
-## 👨‍💻 Author
+```text
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+streamlit
+```
 
-**Mehdi Ali**
+## Key Learning Outcomes
 
-B.Tech – Biotechnology, NIT Warangal
+Through this project, I learned how to:
 
-### Skills Demonstrated
+* Perform EDA on a real-world classification dataset
+* Identify useful features for prediction
+* Handle numerical and categorical features
+* Apply feature scaling
+* Use feature selection techniques
+* Build an SVM classification model
+* Create a preprocessing and ML pipeline
+* Evaluate a classification model
+* Save a trained model using Pickle
+* Build a simple Streamlit ML application
 
-`Python` • `Pandas` • `NumPy` • `EDA` • `Machine Learning` • `Scikit-learn` • `Feature Engineering` • `Feature Selection` • `Data Visualization` • `Streamlit`
+## Disclaimer
 
----
-
-⭐ If you find this project useful, consider giving the repository a star!
+This project is developed for **educational and demonstration purposes**. The prediction should not be used as the sole basis for real-world credit decisions.
